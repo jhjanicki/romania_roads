@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <title>Hillshade Map</title>
+
+    <!-- D3.js -->
+    <script src="http://d3js.org/d3.v3.js"></script>
+
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+    <script src="https://d3js.org/queue.v1.min.js"></script>
+    <script src="topojson/map1/depos250.js"></script>
+    <!-- Open Sans & CSS -->
+    <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px;
+            font-weight: 400;
+            color: #525252;
+            text-align: center;
+        }
+
+        html,
+        body {
+            width: auto;
+            height: auto;
+        }
+
+        #romania_border,
+        #adm1 {
+            fill: none;
+            stroke: #000;
+        }
+
+        #adm1 {
+            opacity: 0.5;
+        }
+
+        #Raster {
+            opacity: 0.4;
+        }
+
+        #np {
+            fill: green;
+/*
+            stroke:green;
+            stroke-width:3px;
+*/
+        }
+        
+        .roads{
+          fill: none;
+          stroke:red;
+        }
+
+        .points {
+            fill: black;
+            border: white;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        // Define map dimensions.
+        var map_width = 1000;
+        var map_height = 1000;
+
+        // Create a unit projection.
+        var map_projection = d3.geo.mercator()
+            .scale(1)
+            .translate([0, 0]);
+        var map_path = d3.geo.path()
+            .projection(map_projection);
+
+        var svg = d3.select("body").append("svg")
+            .attr("class", "map")
+            .attr("width", map_width)
+            .attr("height", map_height);
+
+        var depots = [{
+                "fid": 1,
+                "Name": "Frasinul Depot Reghin",
+                "Type": "Depot that delivers to Sebes",
+                "coordinates": [24.7312264812553, 46.788507018866426]
+            },
+            {
+                "fid": 2,
+                "Name": "Holzindustrie Schweighofer Sebes",
+                "Type": "Sawmill",
+                "coordinates": [23.54767302852997, 45.96669445576563]
+            },
+            {
+                "fid": 3,
+                "Name": "Frasinul Depot Anies",
+                "Type": "Depot That Delivers to Radauti",
+                "coordinates": [24.77465689732179, 47.41623789340625]
+            },
+            {
+                "fid": 4,
+                "Name": "Frasinul Depot in Carlibaba",
+                "Type": "Depot that delivers to Radauti",
+                "coordinates": [25.165135940304268, 47.55151143258138]
+            }, {
+                "fid": 5,
+                "Name": "Holzindustrie Schweighofer Radauti",
+                "Type": "Sawmill",
+                "coordinates": [25.96773347731608, 47.85525862418645]
+            }
+        ];
+
+        
+        queue()
+            .defer(d3.json, "topojson/romania.json")
+            .defer(d3.json, "topojson/romaniaADM1.json")
+            .defer(d3.json, "topojson/map1/np_all.topojson")
+            .defer(d3.json, "topojson/map1/roads.json")
+            .await(ready);
+
+
+        function ready(error, districts, adm1, np,roads) {
+
+            if (error) return console.warn(error);
+
+            var bounds = map_path.bounds(topojson.feature(
+                districts, districts.objects["romania"]));
+
+            // Calculate the pixels per map-path-degree.
+            var scale = 1 / Math.max(
+                (bounds[1][0] - bounds[0][0]) / map_width,
+                (bounds[1][1] - bounds[0][1]) / map_height);
+
+            // Find how to translate map into view based on the calculated scale.
+            var translation = [
+                (map_width - scale * (bounds[1][0] + bounds[0][0])) / 2,
+                (map_height - scale * (bounds[1][1] + bounds[0][1])) / 2
+            ];
+
+            // Scale and center vector using new scale and translation.
+            map_projection
+                .scale(scale)
+                .translate(translation);
+
+            map_path = d3.geo.path()
+                .projection(map_projection);
+
+            // Scale and position shaded relief raster image.
+            // This assumes it has been cropped to the vector outline shape.
+            var raster_width = (bounds[1][0] - bounds[0][0]) * scale;
+            var raster_height = (bounds[1][1] - bounds[0][1]) * scale;
+
+            var rtranslate_x = (map_width - raster_width) / 2;
+            var rtranslate_y = (map_height - raster_height) / 2;
+
+            // Shaded relief
+            // svg.append("image")
+            //     .attr("id", "Raster")
+            //     .attr("clip-path", "url(#clip)")
+            //     .attr("xlink:href", "final.png")
+            //     .attr("class", "raster")
+            //     .attr("width", raster_width)
+            //     .attr("height", raster_height)// 
+            //     .attr("transform",
+            //           "translate(" + rtranslate_x + ", " + rtranslate_y + ")");
+            //           
+            // 
+            //  svg.append("g")
+            //         .datum(topojson.mesh(districts, districts.objects['romania'], function(a, b) { return a === b; }))
+            //         .append("path")
+            //         .attr("class", "country-border")
+            //         .attr("id", "romania_border")  // For shaded relief
+            //         .attr("d", map_path);
+
+
+            // Draw provinces (made up of districts)
+            svg.append("g")
+                .attr('id', 'adm1')
+                .selectAll("path")
+                .data(topojson.feature(adm1, adm1.objects['romaniaADM1']).features)
+                .enter().append("path")
+                .attr("class", "adm1")
+                .attr("d", map_path);
+
+
+            svg.append("g")
+                .attr('id', 'adm0')
+                .datum(topojson.mesh(districts, districts.objects['romania'], function(a, b) {
+                    return a === b;
+                }))
+                .append("path")
+                .attr("class", "country-border")
+                .attr("id", "romania_border")
+                .attr("d", map_path);
+
+            svg.append("g")
+                .attr('id', 'np')
+                .datum(topojson.mesh(np, np.objects['np'], function(a, b) {
+                    return a === b;
+                }))
+                .append("path")
+                .attr("class", "country-border")
+                .attr("d", map_path);
+                
+            svg.append("g")
+                .attr('id', 'roads')
+                .datum(topojson.mesh(roads, roads.objects['roads'], function(a, b) {
+                    return a === b;
+                }))
+                .append("path")
+                .attr("class", "roads")
+                .attr("d", map_path);
+
+/*
+            svg.append("g")
+                .attr("id", "points")
+                .selectAll(".pin")
+                .data(depots)
+                .enter().append("circle", ".pin")
+                .attr("r", 5)
+                .attr("transform", function(d) {
+                    return "translate(" + map_projection([
+                        d.coordinates[0],
+                        d.coordinates[1]
+                    ]) + ")";
+                });
+*/
+
+            svg.append("g")
+                .attr("id", "points2")
+                .selectAll(".dot")
+                .data(depots250)
+                .enter().append("circle", ".dot")
+                .attr("r", 2)
+                .attr("transform", function(d) {
+                    return "translate(" + map_projection([
+                        d.lon,
+                        d.lat
+                    ]) + ")";
+                });
+
+            svg.append("g").append("clipPath")
+                .attr("id", "clip")
+                .append("use")
+                .attr("xlink:href", "#romania_border");
+
+            svg.append("image")
+                .attr("id", "Raster")
+                .attr("clip-path", "url(#clip)")
+                .attr("xlink:href", "final.png")
+                .attr("class", "raster")
+                .attr("width", map_width)
+                .attr("height", map_height);
+
+        }
+    </script>
+
+</body>
+
+</html>

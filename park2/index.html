@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <title>Hillshade Map</title>
+
+    <!-- D3.js -->
+    <script src="http://d3js.org/d3.v3.js"></script>
+
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+    <script src="https://d3js.org/queue.v1.min.js"></script>
+    <!-- Open Sans & CSS -->
+    <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px;
+            font-weight: 400;
+            color: #525252;
+            text-align: center;
+        }
+
+        html,
+        body {
+            width: auto;
+            height: auto;
+        }
+
+        #romania_border,
+        #adm1 {
+            fill: none;
+            stroke: #000;
+        }
+
+        #adm1 {
+            opacity: 0.5;
+        }
+
+        #Raster {
+            opacity: 0.4;
+        }
+
+        #np {
+            fill: green;
+        }
+
+        .points {
+            fill: black;
+            border: white;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        // Define map dimensions.
+        var map_width = 1000;
+        var map_height = 1000;
+
+        // Create a unit projection.
+        var map_projection = d3.geo.mercator()
+            .scale(1)
+            .translate([0, 0]);
+        var map_path = d3.geo.path()
+            .projection(map_projection);
+
+        var svg = d3.select("body").append("svg")
+            .attr("class", "map")
+            .attr("width", map_width)
+            .attr("height", map_height);
+
+        var depots = [{
+                "fid": 1,
+                "Name": "Frasinul Depot Reghin",
+                "Type": "Depot that delivers to Sebes",
+                "coordinates": [24.7312264812553, 46.788507018866426]
+            },
+            {
+                "fid": 2,
+                "Name": "Holzindustrie Schweighofer Sebes",
+                "Type": "Sawmill",
+                "coordinates": [23.54767302852997, 45.96669445576563]
+            },
+            {
+                "fid": 3,
+                "Name": "Frasinul Depot Anies",
+                "Type": "Depot That Delivers to Radauti",
+                "coordinates": [24.77465689732179, 47.41623789340625]
+            },
+            {
+                "fid": 4,
+                "Name": "Frasinul Depot in Carlibaba",
+                "Type": "Depot that delivers to Radauti",
+                "coordinates": [25.165135940304268, 47.55151143258138]
+            }, {
+                "fid": 5,
+                "Name": "Holzindustrie Schweighofer Radauti",
+                "Type": "Sawmill",
+                "coordinates": [25.96773347731608, 47.85525862418645]
+            }
+        ];
+
+        var loading2 = [{"id":1377600,"aviz_id":21596387,"latitude":47.104718,"longitude":25.047213,"volume":13.38,"aviz_time":"17:26:44","adwt_wood_":"","adwt_woo_1":"","wood_type":"","wood_typ_1":"","wood_typ_2":"","wood_typ_3":"","time_ts":"5/24/17 17:26"},{"id":1358784,"aviz_id":21572681,"latitude":47.104335,"longitude":25.047015,"volume":21.12,"aviz_time":"10:44:50","adwt_wood_":41,"adwt_woo_1":10.28,"wood_type":41,"wood_typ_1":"MOLID-LEMN DE FOC","wood_typ_2":"MOLID","wood_typ_3":"LEMN DE FOC","time_ts":"5/23/17 10:44"},{"id":1358784,"aviz_id":21572681,"latitude":47.104335,"longitude":25.047015,"volume":21.12,"aviz_time":"10:44:50","adwt_wood_":32,"adwt_woo_1":10.84,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"5/23/17 10:44"},{"id":1358781,"aviz_id":21572677,"latitude":47.103995,"longitude":25.047233,"volume":13.47,"aviz_time":"10:44:47","adwt_wood_":"","adwt_woo_1":"","wood_type":"","wood_typ_1":"","wood_typ_2":"","wood_typ_3":"","time_ts":"5/23/17 10:44"},{"id":1349167,"aviz_id":21565411,"latitude":47.104328,"longitude":25.047122,"volume":25.53,"aviz_time":"16:39:23","adwt_wood_":32,"adwt_woo_1":25.53,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"5/22/17 16:39"},{"id":658806,"aviz_id":20838961,"latitude":47.085539,"longitude":25.089925,"volume":18.29,"aviz_time":"19:25:04","adwt_wood_":45,"adwt_woo_1":1.07,"wood_type":45,"wood_typ_1":"PALTIN DE MUNTE-LEMN DE FOC","wood_typ_2":"PALTIN DE MUNTE","wood_typ_3":"LEMN DE FOC","time_ts":"3/10/17 19:25"},{"id":658806,"aviz_id":20838961,"latitude":47.085539,"longitude":25.089925,"volume":18.29,"aviz_time":"19:25:04","adwt_wood_":17,"adwt_woo_1":17.22,"wood_type":17,"wood_typ_1":"FAG-LEMN DE FOC","wood_typ_2":"FAG","wood_typ_3":"LEMN DE FOC","time_ts":"3/10/17 19:25"},{"id":658804,"aviz_id":20838959,"latitude":47.0854,"longitude":25.089902,"volume":13.16,"aviz_time":"19:25:02","adwt_wood_":"","adwt_woo_1":"","wood_type":"","wood_typ_1":"","wood_typ_2":"","wood_typ_3":"","time_ts":"3/10/17 19:25"},{"id":658803,"aviz_id":20838958,"latitude":47.085468,"longitude":25.09,"volume":13.86,"aviz_time":"19:25:01","adwt_wood_":"","adwt_woo_1":"","wood_type":"","wood_typ_1":"","wood_typ_2":"","wood_typ_3":"","time_ts":"3/10/17 19:25"},{"id":658802,"aviz_id":20838957,"latitude":47.085865,"longitude":25.089658,"volume":18.3,"aviz_time":"19:25:00","adwt_wood_":72,"adwt_woo_1":18.3,"wood_type":72,"wood_typ_1":"FAG-LEMN ROTUND","wood_typ_2":"FAG","wood_typ_3":"LEMN ROTUND","time_ts":"3/10/17 19:25"},{"id":4793269,"aviz_id":25158602,"latitude":47.098797,"longitude":25.039762,"volume":24.29,"aviz_time":"18:34:18","adwt_wood_":32,"adwt_woo_1":24.29,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"3/13/18 18:34"},{"id":4793160,"aviz_id":25158426,"latitude":47.098787,"longitude":25.040241,"volume":15.42,"aviz_time":"18:09:33","adwt_wood_":32,"adwt_woo_1":15.42,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"3/13/18 18:09"},{"id":1377601,"aviz_id":21596389,"latitude":47.104507,"longitude":25.046621,"volume":20.89,"aviz_time":"17:26:46","adwt_wood_":41,"adwt_woo_1":3.97,"wood_type":41,"wood_typ_1":"MOLID-LEMN DE FOC","wood_typ_2":"MOLID","wood_typ_3":"LEMN DE FOC","time_ts":"5/24/17 17:26"},{"id":1377601,"aviz_id":21596389,"latitude":47.104507,"longitude":25.046621,"volume":20.89,"aviz_time":"17:26:46","adwt_wood_":32,"adwt_woo_1":16.92,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"5/24/17 17:26"},{"id":688011,"aviz_id":20869651,"latitude":47.085897,"longitude":25.089542,"volume":18.26,"aviz_time":"16:43:08","adwt_wood_":17,"adwt_woo_1":18.26,"wood_type":17,"wood_typ_1":"FAG-LEMN DE FOC","wood_typ_2":"FAG","wood_typ_3":"LEMN DE FOC","time_ts":"3/14/17 16:43"},{"id":4790043,"aviz_id":25152602,"latitude":47.098508,"longitude":25.040197,"volume":16.91,"aviz_time":"10:53:37","adwt_wood_":32,"adwt_woo_1":16.91,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"3/13/18 10:53"},{"id":688010,"aviz_id":20869650,"latitude":47.086275,"longitude":25.089754,"volume":12.8,"aviz_time":"16:43:07","adwt_wood_":"","adwt_woo_1":"","wood_type":"","wood_typ_1":"","wood_typ_2":"","wood_typ_3":"","time_ts":"3/14/17 16:43"},{"id":4790039,"aviz_id":25152597,"latitude":47.098714,"longitude":25.039537,"volume":24.78,"aviz_time":"10:53:21","adwt_wood_":32,"adwt_woo_1":24.78,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"3/13/18 10:53"},{"id":4780048,"aviz_id":25143442,"latitude":47.099075,"longitude":25.039067,"volume":25.62,"aviz_time":"12:37:15","adwt_wood_":32,"adwt_woo_1":25.62,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"3/12/18 12:37"},{"id":4780047,"aviz_id":25143440,"latitude":47.099075,"longitude":25.039018,"volume":15.89,"aviz_time":"12:37:11","adwt_wood_":32,"adwt_woo_1":15.89,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"3/12/18 12:37"},{"id":1431653,"aviz_id":21654778,"latitude":47.104774,"longitude":25.046853,"volume":14.25,"aviz_time":"18:43:47","adwt_wood_":41,"adwt_woo_1":1.88,"wood_type":41,"wood_typ_1":"MOLID-LEMN DE FOC","wood_typ_2":"MOLID","wood_typ_3":"LEMN DE FOC","time_ts":"5/30/17 18:43"},{"id":1431653,"aviz_id":21654778,"latitude":47.104774,"longitude":25.046853,"volume":14.25,"aviz_time":"18:43:47","adwt_wood_":32,"adwt_woo_1":12.37,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"5/30/17 18:43"},{"id":4799402,"aviz_id":25162523,"latitude":47.099474,"longitude":25.039504,"volume":25.93,"aviz_time":"11:04:25","adwt_wood_":32,"adwt_woo_1":25.93,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"3/14/18 11:04"},{"id":4799399,"aviz_id":25162517,"latitude":47.099449,"longitude":25.039599,"volume":14.34,"aviz_time":"11:04:15","adwt_wood_":32,"adwt_woo_1":14.34,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"3/14/18 11:04"},{"id":4809471,"aviz_id":25172917,"latitude":47.099074,"longitude":25.039878,"volume":14.39,"aviz_time":"10:19:34","adwt_wood_":32,"adwt_woo_1":14.39,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"3/15/18 10:19"},{"id":4809470,"aviz_id":25172916,"latitude":47.099104,"longitude":25.039932,"volume":21.91,"aviz_time":"10:19:33","adwt_wood_":32,"adwt_woo_1":21.91,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"3/15/18 10:19"},{"id":4809464,"aviz_id":25172904,"latitude":47.099016,"longitude":25.039735,"volume":12.04,"aviz_time":"10:18:57","adwt_wood_":77,"adwt_woo_1":2.7,"wood_type":77,"wood_typ_1":"PALTIN DE MUNTE-LEMN ROTUND","wood_typ_2":"PALTIN DE MUNTE","wood_typ_3":"LEMN ROTUND","time_ts":"3/15/18 10:18"},{"id":4809464,"aviz_id":25172904,"latitude":47.099016,"longitude":25.039735,"volume":12.04,"aviz_time":"10:18:57","adwt_wood_":45,"adwt_woo_1":2.26,"wood_type":45,"wood_typ_1":"PALTIN DE MUNTE-LEMN DE FOC","wood_typ_2":"PALTIN DE MUNTE","wood_typ_3":"LEMN DE FOC","time_ts":"3/15/18 10:18"},{"id":4809464,"aviz_id":25172904,"latitude":47.099016,"longitude":25.039735,"volume":12.04,"aviz_time":"10:18:57","adwt_wood_":41,"adwt_woo_1":2.42,"wood_type":41,"wood_typ_1":"MOLID-LEMN DE FOC","wood_typ_2":"MOLID","wood_typ_3":"LEMN DE FOC","time_ts":"3/15/18 10:18"},{"id":4809464,"aviz_id":25172904,"latitude":47.099016,"longitude":25.039735,"volume":12.04,"aviz_time":"10:18:57","adwt_wood_":32,"adwt_woo_1":4.66,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"3/15/18 10:18"},{"id":4803280,"aviz_id":25169760,"latitude":47.099023,"longitude":25.039708,"volume":22.93,"aviz_time":"20:48:26","adwt_wood_":32,"adwt_woo_1":22.93,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"3/14/18 20:48"},{"id":4803279,"aviz_id":25169759,"latitude":47.0989,"longitude":25.039583,"volume":14.39,"aviz_time":"20:48:25","adwt_wood_":32,"adwt_woo_1":14.39,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"3/14/18 20:48"},{"id":4814247,"aviz_id":25181613,"latitude":47.099162,"longitude":25.040085,"volume":20.93,"aviz_time":"19:41:52","adwt_wood_":45,"adwt_woo_1":1.05,"wood_type":45,"wood_typ_1":"PALTIN DE MUNTE-LEMN DE FOC","wood_typ_2":"PALTIN DE MUNTE","wood_typ_3":"LEMN DE FOC","time_ts":"3/15/18 19:41"},{"id":4814247,"aviz_id":25181613,"latitude":47.099162,"longitude":25.040085,"volume":20.93,"aviz_time":"19:41:52","adwt_wood_":41,"adwt_woo_1":5.89,"wood_type":41,"wood_typ_1":"MOLID-LEMN DE FOC","wood_typ_2":"MOLID","wood_typ_3":"LEMN DE FOC","time_ts":"3/15/18 19:41"},{"id":1431654,"aviz_id":21654779,"latitude":47.104723,"longitude":25.046934,"volume":23.12,"aviz_time":"18:43:51","adwt_wood_":41,"adwt_woo_1":5.09,"wood_type":41,"wood_typ_1":"MOLID-LEMN DE FOC","wood_typ_2":"MOLID","wood_typ_3":"LEMN DE FOC","time_ts":"5/30/17 18:43"},{"id":4814247,"aviz_id":25181613,"latitude":47.099162,"longitude":25.040085,"volume":20.93,"aviz_time":"19:41:52","adwt_wood_":32,"adwt_woo_1":10.03,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"3/15/18 19:41"},{"id":1431654,"aviz_id":21654779,"latitude":47.104723,"longitude":25.046934,"volume":23.12,"aviz_time":"18:43:51","adwt_wood_":32,"adwt_woo_1":18.03,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"5/30/17 18:43"},{"id":4814247,"aviz_id":25181613,"latitude":47.099162,"longitude":25.040085,"volume":20.93,"aviz_time":"19:41:52","adwt_wood_":17,"adwt_woo_1":3.96,"wood_type":17,"wood_typ_1":"FAG-LEMN DE FOC","wood_typ_2":"FAG","wood_typ_3":"LEMN DE FOC","time_ts":"3/15/18 19:41"},{"id":4814244,"aviz_id":25181607,"latitude":47.099273,"longitude":25.039648,"volume":12.26,"aviz_time":"19:40:36","adwt_wood_":77,"adwt_woo_1":1.65,"wood_type":77,"wood_typ_1":"PALTIN DE MUNTE-LEMN ROTUND","wood_typ_2":"PALTIN DE MUNTE","wood_typ_3":"LEMN ROTUND","time_ts":"3/15/18 19:40"},{"id":4814244,"aviz_id":25181607,"latitude":47.099273,"longitude":25.039648,"volume":12.26,"aviz_time":"19:40:36","adwt_wood_":32,"adwt_woo_1":7.85,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"3/15/18 19:40"},{"id":4814244,"aviz_id":25181607,"latitude":47.099273,"longitude":25.039648,"volume":12.26,"aviz_time":"19:40:36","adwt_wood_":17,"adwt_woo_1":2.76,"wood_type":17,"wood_typ_1":"FAG-LEMN DE FOC","wood_typ_2":"FAG","wood_typ_3":"LEMN DE FOC","time_ts":"3/15/18 19:40"},{"id":4809473,"aviz_id":25172919,"latitude":47.098981,"longitude":25.040038,"volume":24.68,"aviz_time":"10:19:37","adwt_wood_":32,"adwt_woo_1":24.68,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"3/15/18 10:19"},{"id":317836,"aviz_id":20482245,"latitude":47.085681,"longitude":25.08905,"volume":12.74,"aviz_time":"17:33:09","adwt_wood_":"","adwt_woo_1":"","wood_type":"","wood_typ_1":"","wood_typ_2":"","wood_typ_3":"","time_ts":"2/8/17 17:33"},{"id":317837,"aviz_id":20482246,"latitude":47.085438,"longitude":25.088912,"volume":17.92,"aviz_time":"17:33:12","adwt_wood_":17,"adwt_woo_1":17.92,"wood_type":17,"wood_typ_1":"FAG-LEMN DE FOC","wood_typ_2":"FAG","wood_typ_3":"LEMN DE FOC","time_ts":"2/8/17 17:33"},{"id":5154809,"aviz_id":25535890,"latitude":47.098432,"longitude":25.039048,"volume":12.42,"aviz_time":"9:08:10","adwt_wood_":32,"adwt_woo_1":4.78,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"08:10.0"},{"id":5141785,"aviz_id":25522984,"latitude":47.10026,"longitude":25.04113,"volume":24.82,"aviz_time":"10:24:58","adwt_wood_":75,"adwt_woo_1":10.8,"wood_type":75,"wood_typ_1":"BRAD-LEMN ROTUND","wood_typ_2":"BRAD","wood_typ_3":"LEMN ROTUND","time_ts":"24:58.0"},{"id":5141785,"aviz_id":25522984,"latitude":47.10026,"longitude":25.04113,"volume":24.82,"aviz_time":"10:24:58","adwt_wood_":32,"adwt_woo_1":14.02,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"24:58.0"},{"id":1103806,"aviz_id":21292839,"latitude":47.104757,"longitude":25.046722,"volume":23.94,"aviz_time":"13:58:27","adwt_wood_":32,"adwt_woo_1":23.94,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"4/27/17 13:58"},{"id":5160422,"aviz_id":25546423,"latitude":47.100183,"longitude":25.040262,"volume":11.6,"aviz_time":"17:30:55","adwt_wood_":17,"adwt_woo_1":0.44,"wood_type":17,"wood_typ_1":"FAG-LEMN DE FOC","wood_typ_2":"FAG","wood_typ_3":"LEMN DE FOC","time_ts":"30:55.0"},{"id":1103805,"aviz_id":21292838,"latitude":47.104998,"longitude":25.046808,"volume":13.43,"aviz_time":"13:58:27","adwt_wood_":32,"adwt_woo_1":13.43,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"4/27/17 13:58"},{"id":5160422,"aviz_id":25546423,"latitude":47.100183,"longitude":25.040262,"volume":11.6,"aviz_time":"17:30:55","adwt_wood_":108,"adwt_woo_1":0.49,"wood_type":108,"wood_typ_1":"ULM DE MUNTE-LEMN DE FOC","wood_typ_2":"ULM DE MUNTE","wood_typ_3":"LEMN DE FOC","time_ts":"30:55.0"},{"id":5154813,"aviz_id":25535896,"latitude":47.098407,"longitude":25.038275,"volume":22.9,"aviz_time":"9:08:17","adwt_wood_":41,"adwt_woo_1":6.36,"wood_type":41,"wood_typ_1":"MOLID-LEMN DE FOC","wood_typ_2":"MOLID","wood_typ_3":"LEMN DE FOC","time_ts":"08:17.0"},{"id":5154813,"aviz_id":25535896,"latitude":47.098407,"longitude":25.038275,"volume":22.9,"aviz_time":"9:08:17","adwt_wood_":32,"adwt_woo_1":16.54,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"08:17.0"},{"id":5154809,"aviz_id":25535890,"latitude":47.098432,"longitude":25.039048,"volume":12.42,"aviz_time":"9:08:10","adwt_wood_":77,"adwt_woo_1":1.41,"wood_type":77,"wood_typ_1":"PALTIN DE MUNTE-LEMN ROTUND","wood_typ_2":"PALTIN DE MUNTE","wood_typ_3":"LEMN ROTUND","time_ts":"08:10.0"},{"id":495484,"aviz_id":20668286,"latitude":47.085435,"longitude":25.089653,"volume":17.62,"aviz_time":"17:59:57","adwt_wood_":45,"adwt_woo_1":0.67,"wood_type":45,"wood_typ_1":"PALTIN DE MUNTE-LEMN DE FOC","wood_typ_2":"PALTIN DE MUNTE","wood_typ_3":"LEMN DE FOC","time_ts":"2/23/17 17:59"},{"id":5154809,"aviz_id":25535890,"latitude":47.098432,"longitude":25.039048,"volume":12.42,"aviz_time":"9:08:10","adwt_wood_":75,"adwt_woo_1":2.27,"wood_type":75,"wood_typ_1":"BRAD-LEMN ROTUND","wood_typ_2":"BRAD","wood_typ_3":"LEMN ROTUND","time_ts":"08:10.0"},{"id":5154809,"aviz_id":25535890,"latitude":47.098432,"longitude":25.039048,"volume":12.42,"aviz_time":"9:08:10","adwt_wood_":45,"adwt_woo_1":0.83,"wood_type":45,"wood_typ_1":"PALTIN DE MUNTE-LEMN DE FOC","wood_typ_2":"PALTIN DE MUNTE","wood_typ_3":"LEMN DE FOC","time_ts":"08:10.0"},{"id":495484,"aviz_id":20668286,"latitude":47.085435,"longitude":25.089653,"volume":17.62,"aviz_time":"17:59:57","adwt_wood_":17,"adwt_woo_1":16.95,"wood_type":17,"wood_typ_1":"FAG-LEMN DE FOC","wood_typ_2":"FAG","wood_typ_3":"LEMN DE FOC","time_ts":"2/23/17 17:59"},{"id":495411,"aviz_id":20668276,"latitude":47.085465,"longitude":25.089745,"volume":12.61,"aviz_time":"17:51:53","adwt_wood_":"","adwt_woo_1":"","wood_type":"","wood_typ_1":"","wood_typ_2":"","wood_typ_3":"","time_ts":"2/23/17 17:51"},{"id":5154809,"aviz_id":25535890,"latitude":47.098432,"longitude":25.039048,"volume":12.42,"aviz_time":"9:08:10","adwt_wood_":41,"adwt_woo_1":3.13,"wood_type":41,"wood_typ_1":"MOLID-LEMN DE FOC","wood_typ_2":"MOLID","wood_typ_3":"LEMN DE FOC","time_ts":"08:10.0"},{"id":5169079,"aviz_id":25551358,"latitude":47.033451,"longitude":25.028423,"volume":14.27,"aviz_time":"9:17:45","adwt_wood_":32,"adwt_woo_1":1.88,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"17:45.0"},{"id":5169079,"aviz_id":25551358,"latitude":47.033451,"longitude":25.028423,"volume":14.27,"aviz_time":"9:17:45","adwt_wood_":17,"adwt_woo_1":5.32,"wood_type":17,"wood_typ_1":"FAG-LEMN DE FOC","wood_typ_2":"FAG","wood_typ_3":"LEMN DE FOC","time_ts":"17:45.0"},{"id":1163304,"aviz_id":21358315,"latitude":47.104635,"longitude":25.046732,"volume":21.44,"aviz_time":"17:56:39","adwt_wood_":32,"adwt_woo_1":21.44,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"5/3/17 17:56"},{"id":5160425,"aviz_id":25546426,"latitude":47.100037,"longitude":25.040275,"volume":24.76,"aviz_time":"17:30:58","adwt_wood_":75,"adwt_woo_1":8.13,"wood_type":75,"wood_typ_1":"BRAD-LEMN ROTUND","wood_typ_2":"BRAD","wood_typ_3":"LEMN ROTUND","time_ts":"30:58.0"},{"id":5160425,"aviz_id":25546426,"latitude":47.100037,"longitude":25.040275,"volume":24.76,"aviz_time":"17:30:58","adwt_wood_":32,"adwt_woo_1":16.63,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"30:58.0"},{"id":5160422,"aviz_id":25546423,"latitude":47.100183,"longitude":25.040262,"volume":11.6,"aviz_time":"17:30:55","adwt_wood_":75,"adwt_woo_1":1.53,"wood_type":75,"wood_typ_1":"BRAD-LEMN ROTUND","wood_typ_2":"BRAD","wood_typ_3":"LEMN ROTUND","time_ts":"30:55.0"},{"id":1141272,"aviz_id":21331034,"latitude":47.104341,"longitude":25.047125,"volume":20.18,"aviz_time":"16:06:58","adwt_wood_":32,"adwt_woo_1":20.18,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"5/1/17 16:06"},{"id":5160422,"aviz_id":25546423,"latitude":47.100183,"longitude":25.040262,"volume":11.6,"aviz_time":"17:30:55","adwt_wood_":45,"adwt_woo_1":1.13,"wood_type":45,"wood_typ_1":"PALTIN DE MUNTE-LEMN DE FOC","wood_typ_2":"PALTIN DE MUNTE","wood_typ_3":"LEMN DE FOC","time_ts":"30:55.0"},{"id":5160422,"aviz_id":25546423,"latitude":47.100183,"longitude":25.040262,"volume":11.6,"aviz_time":"17:30:55","adwt_wood_":41,"adwt_woo_1":1.84,"wood_type":41,"wood_typ_1":"MOLID-LEMN DE FOC","wood_typ_2":"MOLID","wood_typ_3":"LEMN DE FOC","time_ts":"30:55.0"},{"id":507979,"aviz_id":20680528,"latitude":47.084915,"longitude":25.088757,"volume":26.92,"aviz_time":"15:09:58","adwt_wood_":72,"adwt_woo_1":26.92,"wood_type":72,"wood_typ_1":"FAG-LEMN ROTUND","wood_typ_2":"FAG","wood_typ_3":"LEMN ROTUND","time_ts":"2/24/17 15:09"},{"id":5160422,"aviz_id":25546423,"latitude":47.100183,"longitude":25.040262,"volume":11.6,"aviz_time":"17:30:55","adwt_wood_":32,"adwt_woo_1":6.17,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"30:55.0"},{"id":5169090,"aviz_id":25551397,"latitude":47.033451,"longitude":25.028423,"volume":22.8,"aviz_time":"9:19:43","adwt_wood_":75,"adwt_woo_1":3.86,"wood_type":75,"wood_typ_1":"BRAD-LEMN ROTUND","wood_typ_2":"BRAD","wood_typ_3":"LEMN ROTUND","time_ts":"19:43.0"},{"id":5169090,"aviz_id":25551397,"latitude":47.033451,"longitude":25.028423,"volume":22.8,"aviz_time":"9:19:43","adwt_wood_":32,"adwt_woo_1":18.94,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"19:43.0"},{"id":1281990,"aviz_id":21492452,"latitude":47.102478,"longitude":25.043501,"volume":23.62,"aviz_time":"13:55:57","adwt_wood_":32,"adwt_woo_1":23.62,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"5/16/17 13:55"},{"id":5169079,"aviz_id":25551358,"latitude":47.033451,"longitude":25.028423,"volume":14.27,"aviz_time":"9:17:45","adwt_wood_":45,"adwt_woo_1":2.34,"wood_type":45,"wood_typ_1":"PALTIN DE MUNTE-LEMN DE FOC","wood_typ_2":"PALTIN DE MUNTE","wood_typ_3":"LEMN DE FOC","time_ts":"17:45.0"},{"id":1281989,"aviz_id":21492451,"latitude":47.104577,"longitude":25.047642,"volume":12.5,"aviz_time":"13:55:56","adwt_wood_":"","adwt_woo_1":"","wood_type":"","wood_typ_1":"","wood_typ_2":"","wood_typ_3":"","time_ts":"5/16/17 13:55"},{"id":5169079,"aviz_id":25551358,"latitude":47.033451,"longitude":25.028423,"volume":14.27,"aviz_time":"9:17:45","adwt_wood_":41,"adwt_woo_1":4.73,"wood_type":41,"wood_typ_1":"MOLID-LEMN DE FOC","wood_typ_2":"MOLID","wood_typ_3":"LEMN DE FOC","time_ts":"17:45.0"},{"id":583582,"aviz_id":20757324,"latitude":47.085458,"longitude":25.089907,"volume":18.32,"aviz_time":"11:04:10","adwt_wood_":45,"adwt_woo_1":1.03,"wood_type":45,"wood_typ_1":"PALTIN DE MUNTE-LEMN DE FOC","wood_typ_2":"PALTIN DE MUNTE","wood_typ_3":"LEMN DE FOC","time_ts":"3/3/17 11:04"},{"id":583582,"aviz_id":20757324,"latitude":47.085458,"longitude":25.089907,"volume":18.32,"aviz_time":"11:04:10","adwt_wood_":17,"adwt_woo_1":17.29,"wood_type":17,"wood_typ_1":"FAG-LEMN DE FOC","wood_typ_2":"FAG","wood_typ_3":"LEMN DE FOC","time_ts":"3/3/17 11:04"},{"id":583581,"aviz_id":20757322,"latitude":47.085406,"longitude":25.08956,"volume":12.98,"aviz_time":"11:04:09","adwt_wood_":"","adwt_woo_1":"","wood_type":"","wood_typ_1":"","wood_typ_2":"","wood_typ_3":"","time_ts":"3/3/17 11:04"},{"id":1297321,"aviz_id":21510662,"latitude":47.092239,"longitude":25.033931,"volume":21.82,"aviz_time":"17:24:17","adwt_wood_":32,"adwt_woo_1":21.82,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"5/17/17 17:24"},{"id":1297320,"aviz_id":21510661,"latitude":47.095399,"longitude":25.036903,"volume":12.42,"aviz_time":"17:24:15","adwt_wood_":"","adwt_woo_1":"","wood_type":"","wood_typ_1":"","wood_typ_2":"","wood_typ_3":"","time_ts":"5/17/17 17:24"},{"id":588456,"aviz_id":20765329,"latitude":47.085552,"longitude":25.089562,"volume":22.6,"aviz_time":"18:00:16","adwt_wood_":72,"adwt_woo_1":22.6,"wood_type":72,"wood_typ_1":"FAG-LEMN ROTUND","wood_typ_2":"FAG","wood_typ_3":"LEMN ROTUND","time_ts":"3/3/17 18:00"},{"id":588455,"aviz_id":20765327,"latitude":47.085877,"longitude":25.089439,"volume":15.54,"aviz_time":"18:00:15","adwt_wood_":72,"adwt_woo_1":15.54,"wood_type":72,"wood_typ_1":"FAG-LEMN ROTUND","wood_typ_2":"FAG","wood_typ_3":"LEMN ROTUND","time_ts":"3/3/17 18:00"},{"id":1311435,"aviz_id":21525764,"latitude":47.106727,"longitude":25.050175,"volume":24.08,"aviz_time":"17:38:05","adwt_wood_":32,"adwt_woo_1":24.08,"wood_type":32,"wood_typ_1":"MOLID-LEMN ROTUND","wood_typ_2":"MOLID","wood_typ_3":"LEMN ROTUND","time_ts":"5/18/17 17:38"}];
+        
+        queue()
+            .defer(d3.json, "topojson/romania.json")
+            .defer(d3.json, "topojson/romaniaADM1.json")
+            .defer(d3.json, "topojson/CalimaniPark.json")
+            .await(ready);
+
+
+        function ready(error, districts, adm1, np) {
+
+            if (error) return console.warn(error);
+
+            var bounds = map_path.bounds(topojson.feature(
+                districts, districts.objects["romania"]));
+
+            // Calculate the pixels per map-path-degree.
+            var scale = 1 / Math.max(
+                (bounds[1][0] - bounds[0][0]) / map_width,
+                (bounds[1][1] - bounds[0][1]) / map_height);
+
+            // Find how to translate map into view based on the calculated scale.
+            var translation = [
+                (map_width - scale * (bounds[1][0] + bounds[0][0])) / 2,
+                (map_height - scale * (bounds[1][1] + bounds[0][1])) / 2
+            ];
+
+            // Scale and center vector using new scale and translation.
+            map_projection
+                .scale(scale)
+                .translate(translation);
+
+            map_path = d3.geo.path()
+                .projection(map_projection);
+
+            // Scale and position shaded relief raster image.
+            // This assumes it has been cropped to the vector outline shape.
+            var raster_width = (bounds[1][0] - bounds[0][0]) * scale;
+            var raster_height = (bounds[1][1] - bounds[0][1]) * scale;
+
+            var rtranslate_x = (map_width - raster_width) / 2;
+            var rtranslate_y = (map_height - raster_height) / 2;
+
+            // Shaded relief
+            // svg.append("image")
+            //     .attr("id", "Raster")
+            //     .attr("clip-path", "url(#clip)")
+            //     .attr("xlink:href", "final.png")
+            //     .attr("class", "raster")
+            //     .attr("width", raster_width)
+            //     .attr("height", raster_height)// 
+            //     .attr("transform",
+            //           "translate(" + rtranslate_x + ", " + rtranslate_y + ")");
+            //           
+            // 
+            //  svg.append("g")
+            //         .datum(topojson.mesh(districts, districts.objects['romania'], function(a, b) { return a === b; }))
+            //         .append("path")
+            //         .attr("class", "country-border")
+            //         .attr("id", "romania_border")  // For shaded relief
+            //         .attr("d", map_path);
+
+
+            // Draw provinces (made up of districts)
+            svg.append("g")
+                .attr('id', 'adm1')
+                .selectAll("path")
+                .data(topojson.feature(adm1, adm1.objects['romaniaADM1']).features)
+                .enter().append("path")
+                .attr("class", "adm1")
+                .attr("d", map_path);
+
+
+            svg.append("g")
+                .attr('id', 'adm0')
+                .datum(topojson.mesh(districts, districts.objects['romania'], function(a, b) {
+                    return a === b;
+                }))
+                .append("path")
+                .attr("class", "country-border")
+                .attr("id", "romania_border")
+                .attr("d", map_path);
+
+            svg.append("g")
+                .attr('id', 'np')
+                .datum(topojson.mesh(np, np.objects['np'], function(a, b) {
+                    return a === b;
+                }))
+                .append("path")
+                .attr("class", "country-border")
+                .attr("d", map_path);
+
+/*
+            svg.append("g")
+                .attr("id", "points")
+                .selectAll(".pin")
+                .data(depots)
+                .enter().append("circle", ".pin")
+                .attr("r", 5)
+                .attr("transform", function(d) {
+                    return "translate(" + map_projection([
+                        d.coordinates[0],
+                        d.coordinates[1]
+                    ]) + ")";
+                });
+*/
+
+            svg.append("g")
+                .attr("id", "points2")
+                .selectAll(".dot")
+                .data(loading2)
+                .enter().append("circle", ".dot")
+                .attr("r", 2)
+                .attr("transform", function(d) {
+                    return "translate(" + map_projection([
+                        d.longitude,
+                        d.latitude
+                    ]) + ")";
+                });
+
+            svg.append("g").append("clipPath")
+                .attr("id", "clip")
+                .append("use")
+                .attr("xlink:href", "#romania_border");
+
+            svg.append("image")
+                .attr("id", "Raster")
+                .attr("clip-path", "url(#clip)")
+                .attr("xlink:href", "final.png")
+                .attr("class", "raster")
+                .attr("width", map_width)
+                .attr("height", map_height);
+
+        }
+    </script>
+
+</body>
+
+</html>
